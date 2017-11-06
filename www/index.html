@@ -19,7 +19,8 @@
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/enquete.css">
-    <link rel="stylesheet" href="css/dark.css">
+    <link rel="stylesheet" href="css/theme/default.css">
+    <link rel="stylesheet" id="theme_css">
     <link rel="stylesheet" href="css/custom-size.css">
 
     <script>
@@ -50,11 +51,13 @@
         var tag_old_id = "";
         var tag_str = "";
         var list_old_id = "";
-        var old_TL_ws = "";
+        var old_TL_ws = null;
         var image_mode = "";
-        var now_page = "";
         var old_page = "";
-        var out_force = false;
+        var inst_domain = "";
+        var inst_login_cid = "";
+        var inst_login_scr = "";
+        var inst = "";
     </script>
 
     <script src="js/server/server.js"></script>
@@ -68,7 +71,6 @@
     <script src="js/list.js"></script>
     <script src="js/music.js"></script>
     <script src="js/search.js"></script>
-    <script src="js/account_change.js"></script>
 
     <audio id="music-control"></audio>
 </head>
@@ -85,24 +87,34 @@
                         </p>
                     </div>
                 </ons-list-item>
-                <ons-list-item>
+                <ons-list-item tappable onclick="account_change_list()">
                     <div class="center list-item-small">
                         @<span id="account_change-username"></span>
                     </div>
-                    <!--
                     <div class="right list-item-small">
                         <ons-icon icon="fa-caret-down"></ons-icon>
                     </div>
-                    -->
                 </ons-list-item>
             </ons-list>
 
             <div id="menu-list-base">
-                <div id="account-list" style="display: none;"></div>
+                <div id="account-list" style="display: none;">
+                    <ons-list>
+                        <ons-list-item modifier="chevron" tappable onclick="loadNav('login.html', null, true, true)">
+                            <label class="left music-item">
+                                <i class="list-item__icon list-item--chevron__icon ons-icon fa-plus fa fa-fw"></i>
+                            </label>
+                            <div class="center music-item">
+                                アカウント追加
+                            </div>
+                        </ons-list-item>
+                        <div id="account-list-other"></div>
+                    </ons-list>
+                </div>
 
                 <div id="menu-list">
                     <ons-list>
-                        <ons-search-input placeholder="検索" onkeydown="SearchKey();" input-id="nav-search" class="w-max" style="background-color: #3D4454;"></ons-search-input>
+                        <ons-search-input placeholder="検索" onkeydown="SearchKey();" input-id="nav-search" class="w-max nav-search"></ons-search-input>
                         <ons-list-header>ナビゲーション</ons-list-header>
                         <ons-list-item modifier="chevron" tappable onclick="loadNav('post.html', 'up', true, true);">
                             <label class="left music-item">
@@ -152,19 +164,39 @@
                                 設定
                             </div>
                         </ons-list-item>
+                        <ons-list-item modifier="chevron" tappable onclick="music_change()">
+                            <div class="left">
+                                <i class="list-item__icon list-item--chevron__icon ons-icon fa-music fa fa-fw"></i>
+                            </div>
+                            <div class="center">
+                                <span class="list-item__title">Knzk Music</span><span class="list-item__subtitle" id="music_title">Listen.moe</span>
+                            </div>
+                        </ons-list-item>
                     </ons-list>
                 </div>
 
                 <form id="music-form" style="display: none;">
                     <ons-list>
+                        <ons-list-item>
+                            <div class="left" onclick="music_change()">
+                                <i class="list-item__icon ons-icon fa-chevron-left fa fa-fw"></i> 戻る
+                            </div>
+                            <div class="right" onclick="music_set('music-button')">
+                                <i class="list-item__icon ons-icon fa-play fa fa-fw" id="music-button"></i>
+                            </div>
+                        </ons-list-item>
                         <ons-list-header>Channel</ons-list-header>
                         <ons-list-item tappable onclick="music_set('music-button',true)">
                             <label class="left music-item"><ons-radio name="channel" input-id="listen-moe" value="listen-moe" checked></ons-radio></label>
                             <label for="listen-moe" class="center music-item">Listen.moe</label>
                         </ons-list-item>
                         <ons-list-item tappable onclick="music_set('music-button',true)">
-                            <label class="left music-item"><ons-radio name="channel" input-id="ncs" value="ncs"></ons-radio></label>
-                            <label for="ncs" class="center music-item">NCS</label>
+                            <label class="left music-item"><ons-radio name="channel" input-id="AnimeNfo-Radio" value="AnimeNfo-Radio"></ons-radio></label>
+                            <label for="AnimeNfo-Radio" class="center music-item">AnimeNfo Radio</label>
+                        </ons-list-item>
+                        <ons-list-item tappable onclick="music_set('music-button',true)">
+                            <label class="left music-item"><ons-radio name="channel" value="LoFi-hip-hop-Radio" input-id="LoFi-hip-hop-Radio"></ons-radio></label>
+                            <label for="LoFi-hip-hop-Radio" class="center music-item">LoFi hip hop Radio</label>
                         </ons-list-item>
                         <ons-list-item tappable onclick="music_set('music-button',true)">
                             <label class="left music-item"><ons-radio name="channel" value="Poolside-fm" input-id="Poolside-fm"></ons-radio></label>
@@ -190,28 +222,17 @@
                             <label class="left music-item"><ons-radio name="channel" value="danceradiouk" input-id="danceradiouk"></ons-radio></label>
                             <label for="danceradiouk" class="center music-item">danceradiouk   <small>(Box UK Radio)</small></label>
                         </ons-list-item>
+                        <ons-list-item tappable onclick="music_set('music-button',true)">
+                            <label class="left music-item"><ons-radio name="channel" value="FMHIPHOP-COM" input-id="FMHIPHOP-COM"></ons-radio></label>
+                            <label for="FMHIPHOP-COM" class="center music-item">FMHIPHOP.COM</label>
+                        </ons-list-item>
+                        <ons-list-item tappable onclick="music_set('music-button',true)">
+                            <label class="left music-item"><ons-radio name="channel" value="DEEP-RADIO" input-id="DEEP-RADIO"></ons-radio></label>
+                            <label for="DEEP-RADIO" class="center music-item">DEEP RADIO</label>
+                        </ons-list-item>
                     </ons-list>
                 </form>
             </div>
-
-            <ons-list class="splitter-bottom">
-                <ons-list-item onclick="music_change()" tappable>
-                    <div class="center list-item-small" id="music-title">
-                        Listen.moe
-                    </div>
-                    <div class="right list-item-small">
-                        <ons-icon icon="fa-caret-up"></ons-icon>
-                    </div>
-                </ons-list-item>
-                <ons-list-item onclick="music_set('music-button')" tappable>
-                    <div class="center">
-                        <i class="list-item__icon ons-icon fa-play fa fa-fw fa-2x" id="music-button"></i>
-                    </div>
-                    <div class="right">
-                        Music 🎶
-                    </div>
-                </ons-list-item>
-            </ons-list>
         </ons-page>
     </ons-splitter-side>
     <ons-splitter-content id="splitter-content" page="init.html"></ons-splitter-content>
@@ -290,6 +311,9 @@
             </div>
             <div id="home_title" class="center">ローカル</div>
             <div class="right">
+                <ons-toolbar-button onclick="showTL(null, null, null, true)">
+                    <ons-icon icon="fa-refresh"></ons-icon>
+                </ons-toolbar-button>
                 <ons-toolbar-button onclick="TL_next()">
                     <ons-icon icon="fa-angle-right"></ons-icon>
                 </ons-toolbar-button>
@@ -348,13 +372,13 @@
                 <ons-list>
                     <ons-list-item style="padding-left: 0" class="simple-toot">
                         <div class="left" style="padding-right: 6px">
-                            <ons-button modifier="large--quiet" onclick="fn.open()"><ons-icon icon="fa-bars"></ons-icon></ons-button>
+                            <ons-button modifier="quiet" onclick="fn.open()" class="no-rd"><ons-icon icon="fa-bars"></ons-icon></ons-button>
                         </div>
                         <div class="center">
                             <textarea class="textarea w-max" rows="1" placeholder="トゥート！" id="simple_toot_TL_input" onFocus="simple_open()" onkeyup="check_limit(value, 'toot_limit_simple', 'toot-button_simple', 'simple_toot_cw');"></textarea>
                         </div>
                         <div class="right" style="padding-right: 0">
-                            <ons-button modifier="large--quiet" onclick="post('simple_toot_TL_input', {cw:document.getElementById('simple_toot_cw').value, visibility:document.getElementById('post_mode_simple').value, sensitive:document.getElementById('nsfw_input_simple').value, in_reply_to_id: document.getElementById('post_reply_simple').value}, true)" id="toot-button_simple"><ons-icon icon="fa-paper-plane-o"></ons-icon></ons-button>
+                            <ons-button modifier="quiet" class="no-rd" onclick="post('simple_toot_TL_input', {cw:document.getElementById('simple_toot_cw').value, visibility:document.getElementById('post_mode_simple').value, sensitive:document.getElementById('nsfw_input_simple').value, in_reply_to_id: document.getElementById('post_reply_simple').value}, true)" id="toot-button_simple"><ons-icon icon="fa-paper-plane-o"></ons-icon></ons-button>
                         </div>
                     </ons-list-item>
                 </ons-list>
@@ -479,10 +503,6 @@
                     このアプリについて
                 </div>
             </ons-list-item>
-            <ons-list-header>アカウント</ons-list-header>
-            <ons-list-item onclick="show_account(localStorage.getItem('knzk_userid'))" id="account-conf-id">@ でログイン中</ons-list-item>
-            <ons-list-item onclick="login_open()">トークンを再取得</ons-list-item>
-            <ons-list-item onclick="show('logout_dialog')">ログアウト</ons-list-item>
         </ons-list>
         <ons-list>
             <ons-list-header>タイムライン設定</ons-list-header>
@@ -575,6 +595,17 @@
                     <ons-switch onclick="change_conf('knzk_spin', 'conf-spin')" input-id="conf-spin"></ons-switch>
                 </div>
             </ons-list-item>
+            <ons-list-item>
+                <div class="center">
+                    テーマ
+                </div>
+                <div class="right">
+                    <ons-select id="conf-theme" onchange="change_conf('knzk_theme', 'conf-theme', true)">
+                        <option value="">default</option>
+                        <option value="css/theme/dark.css" id="theme_css/theme/dark.css">dark</option>
+                    </ons-select>
+                </div>
+            </ons-list-item>
         </ons-list>
         <div class="container">
             <p class="note">設定は再起動後に反映されます。</p>
@@ -583,7 +614,7 @@
 </ons-template>
 
 <ons-template id="post.html">
-    <ons-page>
+    <ons-page id="toot-page">
         <ons-toolbar>
             <div class="left">
                 <ons-toolbar-button onclick="BackTab('down')">
@@ -630,7 +661,7 @@
             </div>
             <div class="dark-box">
                 <ons-button modifier="quiet" onclick="post_mode()" style="border-radius: 0 0 0 4px" id="post_mode_bt">公開</ons-button>
-                <!--<ons-button modifier="quiet" onclick="showPopover(this, 'emoji_popover')"><ons-icon icon="fa-smile-o"></ons-icon></ons-button>-->
+                <ons-button modifier="quiet" onclick="showPopover(this, 'toot_emoji_popover')" id="toot_emoji_bt"><ons-icon icon="fa-smile-o"></ons-icon></ons-button>
                 <span style="float: right">
                 <b id="toot-limit" class="toot-limit">4096</b>
                 <ons-button onclick="post('toot_textarea', {cw:document.getElementById('cw_input').value, visibility:document.getElementById('post_mode').value, sensitive:document.getElementById('nsfw_input').value, in_reply_to_id: document.getElementById('post_reply').value})" id="toot-button" style="border-radius: 4px 0 4px 0">トゥート！</ons-button>
@@ -960,7 +991,7 @@
                 <img src="img/logo.svg" style="width: 80%;"/>
             </div>
             <p>
-                <b>神崎丼アプリ 1.0.0b4</b>
+                <b>神崎丼アプリ 1.0.0b5</b>
             </p>
             <span class="fa fa-spin"><b>南無！ｗ</b></span>
             <p></p>
@@ -971,39 +1002,46 @@
         <ons-list>
             <ons-list-header>クレジット</ons-list-header>
             <ons-list-item onclick="window.open('https://knzk.me/@y', '_blank')">アプリ開発: ねじりわさび</ons-list-item>
-            <ons-list-item onclick="window.open('https://knzk.me/@twotwo', '_blank')">ロゴ画像: ネイティオ</ons-list-item>
             <ons-list-item onclick="window.open('https://knzk.me/@annotunzdy', '_blank')">iOS版配布: あんのたん</ons-list-item>
-            <ons-list-item onclick="window.open('https://knzk.me/@knzk', '_blank')">神崎丼運営: 神崎おにいさん</ons-list-item>
-            <ons-list-item onclick="window.open('https://knzk.me/@imncls', '_blank')">神崎丼運営 / ロゴ画像: NCLS</ons-list-item>
-            <ons-list-item onclick="window.open('https://knzk.me/@_5', '_blank')">神崎丼運営: 🍊</ons-list-item>
+            <ons-list-item onclick="window.open('https://knzk.me/@twotwo', '_blank')">前ロゴ画像: ネイティオ</ons-list-item>
+            <ons-list-item onclick="window.open('https://knzk.me/@imncls', '_blank')">ロゴ画像: NCLS</ons-list-item>
         </ons-list>
     </ons-page>
 </ons-template>
 
 <ons-template id="login.html">
-    <ons-page>
-        <ons-page>
-            <ons-toolbar>
-                <div class="center">
-                    ログイン
-                </div>
-                <div class="right">
-                    <ons-toolbar-button onclick="loadNav('about.html')">
-                        <ons-icon icon="fa-info-circle"></ons-icon>
-                    </ons-toolbar-button>
-                </div>
-            </ons-toolbar>
-            <div class="container">
-                <div class="y-center">
-                    <p></p>
-                    <div class="w-max main-logo">
-                        <img src="img/logo.svg" style="width: 80%;"/>
-                    </div>
-                    <p><ons-button modifier="large" onclick="login_open()"><b>knzk.meにログイン</b></ons-button></p>
+    <ons-page id="login-page">
+        <ons-toolbar>
+            <div class="left" id="login_left"></div>
+            <div class="center">
+                Mastodonにログイン
+            </div>
+            <div class="right">
+                <ons-toolbar-button onclick="loadNav('about.html')">
+                    <ons-icon icon="fa-info-circle"></ons-icon>
+                </ons-toolbar-button>
+            </div>
+        </ons-toolbar>
+        <div class="container">
+            <div class="y-center">
+                <div class="w-max main-logo login_list">
+                    <p><b>Knzk.me</b></p>
+                    <img src="img/logo.svg" style="width: 60%;"/>
+                    <p class="y-center"><ons-button onclick="login_open('knzk.me')" style="width: 80%;"><b>ログイン</b></ons-button></p>
                     <p><a href="https://knzk.me/about/more">利用規約</a> | <a href="https://knzk.me/terms">プライバシーポリシー</a></p>
                 </div>
+                <div class="w-max main-logo login_list">
+                    <p><b>now.kibousoft.co.jp</b></p>
+                    <p class="y-center"><ons-button onclick="login_open('now.kibousoft.co.jp')" style="width: 80%;"><b>ログイン</b></ons-button></p>
+                    <p><a href="https://now.kibousoft.co.jp/about/more">利用規約</a> | <a href="http://kibousoft.com/privacy.html">プライバシーポリシー</a></p>
+                </div>
+                <div class="w-max main-logo login_list">
+                    <p><b>他のインスタンス</b></p>
+                    <ons-input id="inst_url" modifier="underbar" placeholder="mastodon.social" float></ons-input>
+                    <p class="y-center"><ons-button onclick="login_open_c(document.getElementById('inst_url').value)" style="width: 80%;"><b>ログイン</b></ons-button></p>
+                </div>
             </div>
-        </ons-page>
+        </div>
     </ons-page>
 </ons-template>
 
@@ -1012,6 +1050,15 @@
         <p id="emoji_list_popover" class="emoji_list_scroll">load</p>
         <p>
             <ons-button onclick="hidePopover('emoji_popover')" class="w-max">閉じる</ons-button>
+        </p>
+    </div>
+</ons-popover>
+
+<ons-popover direction="down" id="toot_emoji_popover">
+    <div style="padding: 5px; text-align: center;">
+        <p id="toot_emoji_list_popover" class="emoji_list_scroll" style="height: 150px;">load</p>
+        <p>
+            <ons-button onclick="hidePopover('toot_emoji_popover')" class="w-max">閉じる</ons-button>
         </p>
     </div>
 </ons-popover>
@@ -1070,6 +1117,10 @@
         設定しました。
     </ons-toast>
 
+    <ons-toast id="del_ok">
+        削除しました。
+    </ons-toast>
+
     <ons-toast id="post_now">
         投稿しています... <span class="fa fa-spin"><span class="fa fa-spin"><ons-icon icon="fa-refresh" class="white"></ons-icon></span></ons-icon></span>
     </ons-toast>
@@ -1126,7 +1177,8 @@
     <ons-alert-dialog id="cannot-use-ls">
         <div class="alert-dialog-title">エラー</div>
         <div class="alert-dialog-content">
-            LocalStorageが使用できません。
+            OSのバージョンが古い可能性があります。<br>
+            詳細は開発者にお問い合わせください。
         </div>
     </ons-alert-dialog>
 

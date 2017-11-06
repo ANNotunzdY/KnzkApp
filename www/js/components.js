@@ -15,6 +15,7 @@ window.fn = {};
 window.fn.open = function() {
     var menu = document.getElementById('splitter-menu');
     menu.open();
+    account_list();
     reset_nav();
 };
 
@@ -28,8 +29,6 @@ function reset_nav() {
 }
 
 function load(page) {
-    old_page = now_page;
-    now_page = page;
     if (page != "home.html") {
         try {old_TL_ws.close();} catch(e) {console.log("ws_close_error");}
     }
@@ -37,8 +36,6 @@ function load(page) {
 }
 
 function loadNav(page, mode, splitter, splitter_next) {
-    old_page = now_page;
-    now_page = page;
     var option;
     if (mode === "up") option = {animation:"lift"};
     else option = {animation:"slide"};
@@ -56,7 +53,6 @@ function loadNav(page, mode, splitter, splitter_next) {
 }
 
 function BackTab(mode) {
-    now_page = old_page;
     var option;
     if (mode === "down") option = {animation:"lift"};
     else option = {animation:"slide"};
@@ -110,7 +106,7 @@ function t_text(text) {
     }
 
     text = text.replace(/5,?000\s*兆円/g , "<img src=\"https://knzk.me/emoji/5000tyoen.svg\" style=\"height: 1.8em;\"/>");
-    text = text.replace(/:nicoru(\d+):/g , "<img src=\"https://knzk.me/emoji/nicoru.svg\" style=\"height: 1.5em; transform: rotate($1deg)\"/>");
+    text = text.replace(/:nicoru(-?\d+):/g , "<img src=\"https://knzk.me/emoji/nicoru.svg\" style=\"height: 1.5em; transform: rotate($1deg)\"/>");
     text = text.replace(/:nicoru:/g , "<img src=\"https://knzk.me/emoji/nicoru.svg\" style=\"height: 1.5em;\"/>");
     text = text.replace(/バジリスク\s*タイム/g , "<img src=\"https://knzk.me/emoji/basilisktime.png\" height=\"40\"/>");
     text = text.replace(/熱盛/g , "<img src=\"https://knzk.me/emoji/atumori.svg\" style=\"height: 2.5em\"/>");
@@ -143,7 +139,7 @@ function change_conf(name, id, sel) {
         localStorage.setItem(name, type);
     } else {
         var mode = document.getElementById(id).checked;
-        if (isios) { //iOS
+        if (ons.platform.isIOS()) {
             if (mode == true) {
                 localStorage.setItem(name, 0);
             } else {
